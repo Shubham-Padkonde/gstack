@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+**/sync-gbrain refuses an active autopilot before it touches the brain's source list (#3360, part 2; ported from #3362 by @exGeni).** The code stage checked for a running `gbrain autopilot` only right before its destructive walk. By then it had already cleaned up legacy sources, renamed a source and run `gbrain sources add`, so a refused run still registered a source it never synced.
+
+### Fixed
+- **`bin/gstack-gbrain-sync.ts`**: the code stage runs the autopilot check before Step 0a, so a refusal leaves the source list untouched. The check before the walk stays, because autopilot can start while the steps in between run. Dry-run, read-only and deny policies and the local-engine skip still return earlier and are unchanged. Which processes count as an autopilot (the machine-wide probe, #3360 part 1) is unchanged.
+
+### Tests
+- `test/gstack-gbrain-sync.test.ts` runs the real script against a fake `gbrain` and a `pgrep` that reports an autopilot: the stage is refused and the fake saw no `sources add`, `rename`, `remove` or `sync`. On main the same run issues `sources add`.
+
+## [Unreleased]
+
 **The free test suite no longer rewrites a contributor's global git pre-push hook (#3353).** On a machine with a global `core.hooksPath`, `test/redact-prepush-target.test.ts` and `test/fs-utils.test.ts` ran `gstack-redact install-prepush-hook` with the parent environment. Git resolved the hooks directory to the global one, so the install moved the developer's own `pre-push` to `pre-push.local` and left a managed wrapper pointing into the test checkout, which breaks every later push once that checkout is gone. The same config also failed 4 tests in the target file, 5 in `test/redact-prepush-hook.test.ts` and 1 in `fs-utils`. CI has no global hooks path, so it stayed green.
 
 ### Fixed
