@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+**The OpenSSF Scorecard workflow uploads its results with `github/codeql-action/upload-sarif` 4.39.0 (from 4.38.3), recreated from Dependabot's #3307.** Dependabot's branch can't take a version stamp at merge time, so the same one-line change ships from a crew branch. The new pin `6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee` is the commit that the annotated tag `v4.39.0` points to in github/codeql-action, and GitHub shows that commit as verified. 4.39.0's one breaking change raises the minimum CodeQL bundle to 2.20.7, which applies to `init` and `analyze`. This workflow uses only `upload-sarif` with Scorecard's own SARIF file.
+
+### Changed
+- **`.github/workflows/scorecard.yml`**: `upload-sarif` pinned to `6f2ac81f…` (`# v4.39.0`), byte-for-byte the change in #3307.
+
+## [Unreleased]
+
 **Skills start at once on Windows again: the workflow lease lock no longer depends on symlinks (#3330).** `bin/gstack-lease` took its lock with `ln -s "<holder token>" .lock`. In Git for Windows' default symlink mode (`MSYS` unset), `ln -s` cannot link to a target that does not exist, so the lock was never taken. Every skill start then waited out all 300 tries (0.1 s apart, plus process start costs) before `gstack-skill-start` printed anything, and still wrote no lease. One report measured 499 s per skill start. The error also blamed a "live process" with an empty pid.
 
 ### Fixed
