@@ -1,5 +1,22 @@
 # Changelog
 
+## [Unreleased]
+
+**gstack installs on a project that pins Bun 1.4.4 again.** gbrain master moved its CI to Bun 1.4.4 (gbrain #7374, the Brotli CVE-2026-111497 fix), and gstack's Capy installer then stopped every gbrain session with `RUNTIME_PIN_CONFLICT` ("verified archives: 1.4.2 1.4.3 … pins exactly 1.4.4"), because it installs only Bun archives whose SHA-256 it carries. It now carries 1.4.4, so the same run installs the pinned Bun and ends `gstack: ok`.
+
+### Fixed
+- **`bin/gstack-bun-version.sh`**: `GSTACK_BUN_VERIFIED` is now 1.4.2 1.4.3 1.4.4, with 1.4.4's checksums for linux-x64, linux-x64-baseline and linux-aarch64, the targets 1.4.3 covers. They come from the release's `SHASUMS256.txt.asc`, whose clearsigned signature verifies against Bun's release key F3DCC08A8572C0749B3E18888EAB4D40A7B22B59 (Robobun, the key oven-sh/bun's own Dockerfiles assert), and each archive was downloaded and hashed to the same value. The 1.4.2 and 1.4.3 entries are unchanged and verify the same way. gstack's own minimum (1.4.2), install default (1.4.3) and CI pins do not move.
+- **`test/gstack-capy-install.test.ts`**: a gbrain-like repo whose CI pins only 1.4.4 refuses `~/.bun` 1.4.3 and installs the 1.4.4 archive. **`test/bun-version-drift.test.ts`**: every verified version must carry a checksum for each installer target. The existing "verified archives" text assertions list 1.4.4.
+
+
+**docsync-fault-interface fits its budgets under load again.** On 2026-10-18 it timed out under load on a Ubicloud full run. Its nested 36-case suite spent most of its time starting processes: each fault actor spawn loaded about 36 ms of imports (an empty bun takes 5.5 ms), inspect repeated Git reads, and the whole nested run sat under one 120 s outer test. With real Git on 4 cores, inner cases now take a 0.70 s median (max 1.25 s) unloaded, against 1.07 s before. Under 8 busy loops the max is 3.44 s, inside bun's default 5 s; before, cases reached 4.45 s. The worst outer test went from about 100 s of its 120 s cap to 33 s. No timeout, budget, retry, assertion or case changed.
+
+### Fixed
+- **`test/helpers/docsync-fault-actor.ts`**: imports only light helper modules, hashes with `Bun.CryptoHasher` instead of loading `node:crypto`, and loads the redaction engine only on the snapshot-failure path. inspect makes 8 Git calls instead of 11, and the snapshot base check reuses the `--base` it just passed. Each actor spawn now costs 15–19 ms.
+- **`test/helpers/docsync-repo.ts`, `test/helpers/docsync-interface.ts`** (new): the fixture's Git and file helpers and `docsNativeInterface` moved out of the fixture and observer modules, so the actor stops loading the eval store and the QA observer. `docsync-fixture.ts` and `docsync-observer.ts` re-export them, so no importer changed. The fixture writes its Git identity with one append to `.git/config` instead of three `git config` calls.
+- **`bin/gstack-docs-candidate`**: snapshot lists `ls-files` once instead of twice and hashes with `Bun.CryptoHasher`. A snapshot spawn went from 68 ms to 46 ms, and the record it writes is byte-identical.
+- **`test/docsync-fault-interface.test.ts`**: the nested callback run is split into three outer tests by test-name pattern (10, 12 and 14 cases). Each part asserts its exact pass count, its exact filtered-out count and `0 fail`, so all 36 cases still run and the patterns are disjoint.
+
 ## [1.91.181.0] - 2026-10-23
 
 **/cso can run its contained runtime checks.** Before this release the runtime catalog qualified nothing, so /cso always fell back to static assessment. It now qualifies ten pinned images: Node 24.4.0, Bun 1.3.10, Python 3.13.4 with uv 0.8.0, Rails on Ruby 3.4.4, and PostgreSQL 17.2, each for linux/amd64 and linux/arm64. With Docker installed, comprehensive /cso boots the target app inside the matching image and tests findings and repairs against it. The images passed the private evaluator's release qualification (run-5 statements, re-delivered under Garry's approval). The ingress then checked them in qualify run 39674065531 at 514fbfd.
