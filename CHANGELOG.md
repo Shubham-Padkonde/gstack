@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+**`gstack-diff-scope` sees Python tests and nested test directories (#3335).** A branch that changed `components/orch/services/shared/tests/test_native_store_custody.py` reported `SCOPE_TESTS=false`, because the Tests rule only knew `*.test.*`-style suffixes and `test/`, `tests/`, `spec/` and `__tests__/` at the repository root. /ship and /review use that flag to route the testing specialist, so a backend change whose tests follow pytest's `test_*.py` convention skipped it. The test-bootstrap resolver already counted these files, so the two detectors disagreed.
+
+### Fixed
+- **`bin/gstack-diff-scope`**: a changed path is a test when it matches `TEST_PATH_RE`, the same regex the test-bootstrap resolver uses for its TESTFILES count (`scripts/resolvers/testing.ts`): test dirs at any depth, `test_*.py`, `tests.py`, `_test.<ext>`, `.test.`/`.spec.` JS and TS, `_spec.rb` and `*Test.java`/`.kt`. `conftest.py` counts too. The existing globs stay.
+
+### Tests
+- `test/diff-scope.test.ts` adds the issue's three paths, `pkg/test_store.py`, Django's `tests.py`, `conftest.py`, and nested `__tests__/` and `spec/` dirs; all eight fail on main. Controls that stay `SCOPE_TESTS=false`: `latest.py`, `contest_rules.py`, `attest_signer.py` and a `testing/` dir. A new test checks that `TEST_PATH_RE` is byte-identical to the resolver's regex, so the two can't drift again.
+
+## [Unreleased]
+
 **/autoplan works when Claude Code's project directory is a subfolder of the repository (#3296).** When the git root sits above the project (for example the root is `$HOME` and the session starts in `$HOME/projects/app`), a worktree session's journal lives in `.claude/worktrees/<name>` under that subfolder. The publication guard only looked for `<project dir>/.git/worktrees`, found nothing, and denied every phase Read with `foreign_cwd`, so the reporter had to restart the session from the repository root.
 
 ### Fixed
