@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+**The free test suite no longer rewrites a contributor's global git pre-push hook (#3353).** On a machine with a global `core.hooksPath`, `test/redact-prepush-target.test.ts` and `test/fs-utils.test.ts` ran `gstack-redact install-prepush-hook` with the parent environment. Git resolved the hooks directory to the global one, so the install moved the developer's own `pre-push` to `pre-push.local` and left a managed wrapper pointing into the test checkout, which breaks every later push once that checkout is gone. The same config also failed 4 tests in the target file, 5 in `test/redact-prepush-hook.test.ts` and 1 in `fs-utils`. CI has no global hooks path, so it stayed green.
+
+### Fixed
+- **`test/helpers/git-env.ts`** (new): `gitEnv()` is the one fixture environment for git and hook installs: `GIT_CONFIG_GLOBAL=/dev/null`, `GIT_CONFIG_NOSYSTEM=1`, `GIT_CONFIG_COUNT=0` and no `GIT_CONFIG_PARAMETERS`. Config written inside the fixture repo still applies.
+- `test/redact-prepush-target.test.ts`, `test/redact-prepush-hook.test.ts` and `test/fs-utils.test.ts` pass it to every fixture git, install and hook spawn. `test/redact-prepush-scan-range.test.ts` and `test/redact-prepush-rebase-force-push.test.ts` drop their private copies (#2967) and import it.
+
+### Tests
+- A new case in `test/redact-prepush-target.test.ts` sets a global, system and environment `core.hooksPath` to a hook that fails, builds the fixture, and checks the developer's hooks directory is untouched, the managed hook landed in the fixture repo, and a push never runs the developer's hook. It fails without the shared environment.
+- Rerun of the issue's repro with `HOME` pointing at a gitconfig with a global hooks dir: on main, two files rewrote it and three files had failures; with this change all six `redact-prepush-*` and `fs-utils` files pass and the directory is unchanged.
+
+## [Unreleased]
+
 **The Capy install guide says that the team-mode session-start updater also waits for live workflow leases.** With #3385 (#3363), `bin/gstack-session-update` skips its background fast-forward while another session holds a live workflow lease, the same leases `bin/gstack-upgrade` already honors. `docs/capy-install.md` described only the upgrade side.
 
 ### Documentation
