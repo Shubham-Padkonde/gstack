@@ -456,6 +456,8 @@ do_derive() {
         let e;
         try { e = JSON.parse(line); } catch { continue; }
         if (!e.question_id || !e.user_choice) continue;
+        // Model picks and replayed preferences are not fresh human answers.
+        if (e.source === 'spawned-env-deny' || e.source === 'auto-decided') continue;
         count++;
         skills.add(e.skill);
         qids.add(e.question_id);
@@ -475,7 +477,7 @@ do_derive() {
         values,
         sample_size: count,
         // Events that actually moved a dimension (B10): sample_size counts every
-        // logged answer, most of which match no signal and leave the 0.5 seed.
+        // human answer, most of which match no signal and leave the 0.5 seed.
         signal_events: signalEvents,
         diversity: {
           skills_covered: skills.size,
@@ -529,6 +531,7 @@ do_trace() {
       for (const line of lines) {
         let e;
         try { e = JSON.parse(line); } catch { continue; }
+        if (e.source === 'spawned-env-deny' || e.source === 'auto-decided') continue;
         const def = QUESTIONS[e.question_id];
         if (!def || !def.signal_key) continue;
         const deltas = SIGNAL_MAP[def.signal_key]?.[e.user_choice] || [];

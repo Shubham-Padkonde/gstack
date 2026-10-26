@@ -314,6 +314,57 @@ describe('gstack-developer-profile --derive', () => {
 // --trace
 // -----------------------------------------------------------------------
 
+describe('developer profile excludes machine answers', () => {
+  function writeEvents(events: Array<Record<string, unknown>>) {
+    process.env.GSTACK_PROJECT_SLUG = 'profile-source-test';
+    const dir = path.join(tmpHome, 'projects', 'profile-source-test');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'question-log.jsonl'), events.map((e) => JSON.stringify(e)).join('\n') + '\n');
+  }
+
+  const answer = {
+    question_id: 'plan-ceo-review-mode',
+    skill: 'plan-ceo-review',
+    user_choice: 'expand',
+    ts: '2026-04-01T10:00:00Z',
+  };
+
+  test.each(['spawned-env-deny', 'auto-decided'])('%s does not train the profile or appear in its trace', (source) => {
+    writeEvents([{ ...answer, source }]);
+    expect(runDev('--derive').status).toBe(0);
+    const { inferred } = readProfile() as {
+      inferred: { values: Record<string, number>; sample_size: number; signal_events: number; diversity: Record<string, number> };
+    };
+    expect(inferred.sample_size).toBe(0);
+    expect(inferred.signal_events).toBe(0);
+    expect(Object.values(inferred.values).every((value) => value === 0.5)).toBe(true);
+    expect(inferred.diversity).toEqual({ skills_covered: 0, question_ids_covered: 0, days_span: 0 });
+    const trace = runDev('--trace', 'scope_appetite');
+    expect(trace.status).toBe(0);
+    expect(trace.stdout).toContain('TRACE: no events contribute to scope_appetite');
+  });
+
+  test('mixed logs retain human and historical answers without reinforcing replayed choices', () => {
+    const humanEvents = [undefined, 'agent', 'hook', 'auq-other', 'codex-import-marker', 'codex-import-pattern']
+      .map((source) => ({ ...answer, source }));
+    writeEvents(humanEvents);
+    expect(runDev('--derive').status).toBe(0);
+    const humanProfile = readProfile();
+    const humanTrace = runDev('--trace', 'scope_appetite');
+    expect(humanTrace.status).toBe(0);
+    expect(humanProfile.inferred).toMatchObject({ sample_size: 6, signal_events: 6 });
+
+    writeEvents([...humanEvents, ...['spawned-env-deny', 'auto-decided'].map((source) => ({
+      ...answer, source, skill: 'automatic-skill', ts: '2026-04-02T10:00:00Z',
+    }))]);
+    expect(runDev('--derive').status).toBe(0);
+    expect(readProfile().inferred).toEqual(humanProfile.inferred);
+    const mixedTrace = runDev('--trace', 'scope_appetite');
+    expect(mixedTrace.status).toBe(0);
+    expect(mixedTrace.stdout).toBe(humanTrace.stdout);
+  });
+});
+
 describe('gstack-developer-profile --trace <dim>', () => {
   test('shows contributing events with delta values', () => {
     for (let i = 0; i < 3; i++) {
