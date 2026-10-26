@@ -46,6 +46,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          ref: 815436e2b69479fc3ac307e0ea7833892f0aea31
           persist-credentials: false
           # Full history: the seed ratchet compares the allowlist with its
           # merge-base copy, which a depth-1 checkout cannot read.
@@ -74,6 +75,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          ref: 815436e2b69479fc3ac307e0ea7833892f0aea31
           persist-credentials: false
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
@@ -112,6 +114,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          ref: 815436e2b69479fc3ac307e0ea7833892f0aea31
           persist-credentials: false
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
@@ -156,6 +159,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          ref: 815436e2b69479fc3ac307e0ea7833892f0aea31
           persist-credentials: false
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
@@ -184,6 +188,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          ref: 815436e2b69479fc3ac307e0ea7833892f0aea31
           persist-credentials: false
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
@@ -214,6 +219,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          ref: 815436e2b69479fc3ac307e0ea7833892f0aea31
           persist-credentials: false
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
@@ -232,11 +238,12 @@ jobs:
   # the quick tier also runs on it. Its pin equals GSTACK_BUN_DEFAULT;
   # test/bun-version-drift.test.ts checks this job exists and agrees.
   quick-bun-default:
-    runs-on: ubicloud-standard-8
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          ref: 815436e2b69479fc3ac307e0ea7833892f0aea31
           persist-credentials: false
       # Push runs check out main with `checkout -B main`, so the clone holds a
       # local main; PR runs are a detached merge ref and train dispatches sit on
@@ -314,7 +321,7 @@ jobs:
 
   free-suite:
     needs: free-plan
-    runs-on: ubicloud-standard-8
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -323,6 +330,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          ref: 815436e2b69479fc3ac307e0ea7833892f0aea31
           persist-credentials: false
 
       # Push runs check out main with `checkout -B main`, so the clone holds a
@@ -531,6 +539,7 @@ jobs:
           test "$CSO_DOCKER_RESULT" = success
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          ref: 815436e2b69479fc3ac307e0ea7833892f0aea31
           persist-credentials: false
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
