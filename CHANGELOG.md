@@ -1,5 +1,36 @@
 # Changelog
 
+## [1.91.229.0] - 2026-10-26
+
+**Your profile learns from your answers.
+Automatic choices stop reinforcing themselves.**
+
+Developer profiles now exclude automatic choices when deriving your preferences. A choice made because a spawned session could not ask you, or replayed from an earlier preference, no longer counts as a new answer. Those events also disappear from the explanation of which answers shaped a dimension. Your direct answers and historical records without a source label continue to count.
+
+### The four numbers that matter
+
+The reproduction runs `bin/gstack-developer-profile --derive` and `--trace scope_appetite` against an isolated question log containing two `plan-ceo-review-mode` answers of `expand`: one `spawned-env-deny` and one `auto-decided`. Neither event records a fresh human decision. These are fixture measurements, not production usage statistics.
+
+| Measure | Before | After | Change |
+| --- | --- | --- | --- |
+| Answer samples | 2 | 0 | 2 automatic samples excluded |
+| Signal events | 2 | 0 | 2 automatic signals excluded |
+| Scope appetite | 0.589 | 0.5 | Neutral seed preserved |
+| Contributing trace rows | 2 | 0 | 2 misleading explanations removed |
+
+Two automatic expansion choices previously shifted the profile even though nobody had answered a question. They now leave an otherwise empty profile neutral. Repeatedly replaying a preference cannot make that preference look like repeated confirmation from you.
+
+### What this means for people using profiles
+
+When you inspect why gstack inferred a preference, automatic choices no longer appear as fresh evidence. The same filter applies to sample counts, contributing signals, and skill, question, and day coverage, so automatic activity cannot inflate those measures either. Existing logs remain available; derivation filters their events without rewriting them. Run `bin/gstack-developer-profile --derive` to refresh your profile, then inspect a dimension with `--trace`.
+
+### Itemized changes
+
+- Exclude `spawned-env-deny` and `auto-decided` from profile derivation and trace output.
+- Preserve human, imported, and source-less historical answers.
+- Add regression coverage for both automatic sources and mixed historical/human logs.
+- Contributed by @Shubham-Padkonde.
+
 ## [1.91.228.0] - 2026-10-26
 
 **Skills start at once on Windows again: the workflow lease lock no longer depends on symlinks (#3330).** `bin/gstack-lease` took its lock with `ln -s "<holder token>" .lock`. In Git for Windows' default symlink mode (`MSYS` unset), `ln -s` cannot link to a target that does not exist, so the lock was never taken. Every skill start then waited out all 300 tries (0.1 s apart, plus process start costs) before `gstack-skill-start` printed anything, and still wrote no lease. One report measured 499 s per skill start. The error also blamed a "live process" with an empty pid.
